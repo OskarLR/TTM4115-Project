@@ -2,7 +2,7 @@ import paho.mqtt.client as mqtt
 import logging
 from threading import Thread
 import json
-from appJar import gui
+from stmpy import Machine, Driver
 
 # TODO: choose proper MQTT broker address
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
@@ -13,7 +13,7 @@ MQTT_TOPIC_INPUT = 'ttm4115/team_17/scooter_command'
 MQTT_TOPIC_OUTPUT = 'ttm4115/team_17/scooter_status'
 
 
-class TimerCommandSenderComponent:
+class EScooter:
     """
     The component to send voice commands.
     """
@@ -76,4 +76,26 @@ formatter = logging.Formatter('%(asctime)s - %(name)-12s - %(levelname)-8s - %(m
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-t = TimerCommandSenderComponent()
+escooter = EScooter()
+driver = Driver()
+
+initial_to_parked = {'source':'initial', 'target':'parked'}
+parked_to_in_use = {'trigger':'unlock', 'source':'parked', 'target':'in_use', 'effect':'start_ride'}
+parked_to_charging = {'trigger':'connected', 'source':'parked', 'target':'charging', 'effect':'start_charging'}
+in_use_to_parked = {'trigger':'parked', 'source':'in_use', 'target':'parked', 'effect':'end_ride'}
+parked_to_offline = {'trigger':'turn_off', 'source':'parked', 'target':'offline'}
+in_use_to_charging = {'trigger':'connected', 'source':'in_use', 'target':'charging', 'effect':'end_ride;start_charging'}
+charging_to_in_use = {'trigger':'unlock', 'source':'charging', 'target':'in_use', 'effect':'stop_charging;start_ride'}
+
+stm_escooter = Machine(transitions=[initial_to_parked, 
+                                    parked_to_in_use, 
+                                    parked_to_charging, 
+                                    in_use_to_parked, 
+                                    parked_to_offline, 
+                                    in_use_to_charging, 
+                                    charging_to_in_use], 
+                       obj=escooter, name='stm_escooter')
+
+escooter.stm = stm_escooter
+
+driver.start()
