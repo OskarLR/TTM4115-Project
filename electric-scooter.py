@@ -8,9 +8,9 @@ from appJar import gui
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
-# TODO: choose proper topics for communication
-MQTT_TOPIC_INPUT = 'ttm4115/team_17/command'
-MQTT_TOPIC_OUTPUT = 'ttm4115/team_17/answer'
+# Updated MQTT topics for e-scooter system
+MQTT_TOPIC_INPUT = 'ttm4115/team_17/scooter_command'
+MQTT_TOPIC_OUTPUT = 'ttm4115/team_17/scooter_status'
 
 
 class TimerCommandSenderComponent:
@@ -23,7 +23,20 @@ class TimerCommandSenderComponent:
         self._logger.debug('MQTT connected to {}'.format(client))
 
     def on_message(self, client, userdata, msg):
-        pass
+        payload = json.loads(msg.payload)
+        self._logger.info(f"Received message: {payload}")
+        if payload["command"] == "unlock_scooter":
+            scooter_id = payload["scooter_id"]
+            self._logger.info(f"Unlocking scooter {scooter_id}")
+            # Simulate unlocking scooter
+            response = {"scooter_id": scooter_id, "status": "unlocked"}
+            self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, json.dumps(response))
+        elif payload["command"] == "get_status":
+            scooter_id = payload["scooter_id"]
+            self._logger.info(f"Getting status for scooter {scooter_id}")
+            # Simulate scooter status
+            response = {"scooter_id": scooter_id, "status": "available"}
+            self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, json.dumps(response))
 
     def __init__(self):
         # get the logger object for the component
@@ -47,62 +60,35 @@ class TimerCommandSenderComponent:
     def create_gui(self):
         self.app = gui()
 
-        def extract_timer_name(label):
-            label = label.lower()
-            if 'spaghetti' in label: return 'spaghetti'
-            if 'green tea' in label: return 'green tea'
-            if 'soft eggs' in label: return 'soft eggs'
-            return None
-
-        def extract_duration_seconds(label):
-            label = label.lower()
-            if 'spaghetti' in label: return 600
-            if 'green tea' in label: return 120
-            if 'soft eggs' in label: return 240
-            return None
-
         def publish_command(command):
             payload = json.dumps(command)
             self._logger.info(command)
             self.mqtt_client.publish(MQTT_TOPIC_INPUT, payload=payload, qos=2)
 
-        self.app.startLabelFrame('Starting timers:')
-        def on_button_pressed_start(title):
-            name = extract_timer_name(title)
-            duration = extract_duration_seconds(title)
-            command = {"command": "new_timer", "name": name, "duration": duration}
+        self.app.startLabelFrame('Scooter Operations:')
+        
+        def on_button_pressed_unlock(title):
+            scooter_id = self.app.getEntry("Scooter ID")
+            command = {"command": "unlock_scooter", "scooter_id": scooter_id}
             publish_command(command)
-        self.app.addButton('Start Spaghetti Timer', on_button_pressed_start)
-        self.app.addButton('Start Green Tea Timer', on_button_pressed_start)
-        self.app.addButton('Start Soft Eggs Timer', on_button_pressed_start)
-        self.app.stopLabelFrame()
+        self.app.addLabelEntry("Scooter ID")
+        self.app.addButton('Unlock Scooter', on_button_pressed_unlock)
 
-        self.app.startLabelFrame('Stopping timers:')
-        def on_button_pressed_stop(title):
-            name = extract_timer_name(title)
-            command = {"command": "cancel_timer", "name": name}
-            publish_command(command)
-        self.app.addButton('Cancel Spaghetti Timer', on_button_pressed_stop)
-        self.app.addButton('Cancel Green Tea Timer', on_button_pressed_stop)
-        self.app.addButton('Cancel Soft Eggs Timer', on_button_pressed_stop)
-        self.app.stopLabelFrame()
-
-        self.app.startLabelFrame('Asking for status:')
         def on_button_pressed_status(title):
-            name = extract_timer_name(title)
-            if name is None:
-                command = {"command": "status_all_timers"}
-            else:
-                command = {"command": "status_single_timer", "name": name}
+            scooter_id = self.app.getEntry("Scooter ID")
+            command = {"command": "get_status", "scooter_id": scooter_id}
             publish_command(command)
-        self.app.addButton('Get All Timers Status', on_button_pressed_status)
-        self.app.addButton('Get Spaghetti Timer Status', on_button_pressed_status)
-        self.app.addButton('Get Green Tea Timer Status', on_button_pressed_status)
-        self.app.addButton('Get Soft Eggs Timer Status', on_button_pressed_status)
+        self.app.addButton('Get Scooter Status', on_button_pressed_status)
+
+        def on_button_pressed_stop(title):
+            scooter_id = self.app.getEntry("Scooter ID")
+            command = {"command": "stop_scooter", "scooter_id": scooter_id}
+            publish_command(command)
+        self.app.addButton('Stop Scooter', on_button_pressed_stop)
+
         self.app.stopLabelFrame()
 
         self.app.go()
-
 
     def stop(self):
         """
