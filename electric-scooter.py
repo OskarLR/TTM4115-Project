@@ -55,41 +55,6 @@ class TimerCommandSenderComponent:
         # start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
 
-        self.create_gui()
-
-    def create_gui(self):
-        self.app = gui()
-
-        def publish_command(command):
-            payload = json.dumps(command)
-            self._logger.info(command)
-            self.mqtt_client.publish(MQTT_TOPIC_INPUT, payload=payload, qos=2)
-
-        self.app.startLabelFrame('Scooter Operations:')
-        
-        def on_button_pressed_unlock(title):
-            scooter_id = self.app.getEntry("Scooter ID")
-            command = {"command": "unlock_scooter", "scooter_id": scooter_id}
-            publish_command(command)
-        self.app.addLabelEntry("Scooter ID")
-        self.app.addButton('Unlock Scooter', on_button_pressed_unlock)
-
-        def on_button_pressed_status(title):
-            scooter_id = self.app.getEntry("Scooter ID")
-            command = {"command": "get_status", "scooter_id": scooter_id}
-            publish_command(command)
-        self.app.addButton('Get Scooter Status', on_button_pressed_status)
-
-        def on_button_pressed_stop(title):
-            scooter_id = self.app.getEntry("Scooter ID")
-            command = {"command": "stop_scooter", "scooter_id": scooter_id}
-            publish_command(command)
-        self.app.addButton('Stop Scooter', on_button_pressed_stop)
-
-        self.app.stopLabelFrame()
-
-        self.app.go()
-
     def stop(self):
         """
         Stop the component.

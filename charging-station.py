@@ -54,40 +54,12 @@ class ChargingStationComponent:
         # Start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
 
-        self.create_gui()
-
-    def create_gui(self):
-        self.app = gui()
-
-        def publish_command(command):
-            payload = json.dumps(command)
-            self._logger.info(command)
-            self.mqtt_client.publish(MQTT_TOPIC_INPUT, payload=payload, qos=2)
-
-        self.app.startLabelFrame('Charging Station Controls:')
-        def on_button_pressed_start(title):
-            scooter_id = self.app.getEntry("Scooter ID")
-            command = {"command": "start_charging", "scooter_id": scooter_id}
-            publish_command(command)
-        self.app.addLabelEntry("Scooter ID")
-        self.app.addButton('Start Charging', on_button_pressed_start)
-
-        def on_button_pressed_status(title):
-            scooter_id = self.app.getEntry("Scooter ID")
-            command = {"command": "get_charging_status", "scooter_id": scooter_id}
-            publish_command(command)
-        self.app.addButton('Get Charging Status', on_button_pressed_status)
-        self.app.stopLabelFrame()
-
-        self.app.go()
-
     def stop(self):
         """
         Stop the component.
         """
         # Stop the MQTT client
         self.mqtt_client.loop_stop()
-
 
 # Logging configuration
 debug_level = logging.DEBUG

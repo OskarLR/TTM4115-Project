@@ -44,34 +44,6 @@ class TimerCommandSenderComponent:
 
         self.create_gui()
 
-    def create_gui(self):
-        self.app = gui()
-
-        def publish_command(command):
-            payload = json.dumps(command)
-            self._logger.info(command)
-            self.mqtt_client.publish(MQTT_TOPIC_INPUT, payload=payload, qos=2)
-
-        self.app.startLabelFrame('Scooter Operations:')
-        def on_button_pressed_start(title):
-            command = {"command": "unlock_scooter", "scooter_id": title}
-            publish_command(command)
-        self.app.addButton('Unlock Scooter 1', on_button_pressed_start)
-        self.app.addButton('Unlock Scooter 2', on_button_pressed_start)
-        self.app.addButton('Unlock Scooter 3', on_button_pressed_start)
-        self.app.stopLabelFrame()
-
-        self.app.startLabelFrame('Scooter Status:')
-        def on_button_pressed_status(title):
-            command = {"command": "get_status", "scooter_id": title}
-            publish_command(command)
-        self.app.addButton('Get Scooter 1 Status', on_button_pressed_status)
-        self.app.addButton('Get Scooter 2 Status', on_button_pressed_status)
-        self.app.addButton('Get Scooter 3 Status', on_button_pressed_status)
-        self.app.stopLabelFrame()
-
-        self.app.go()
-
 
     def stop(self):
         """
