@@ -6,8 +6,8 @@ import requests
 
 app = FastAPI()
 
-API_URL = "http://127.0.0.1:8001"
-
+API_URL = "http://127.0.0.1:8000"
+SCOOTER_URL = "http://10.0.0.35:8000"
 
 
 
@@ -58,7 +58,7 @@ def rent_scooter(request: RentRequest):
         raise HTTPException(status_code=400, detail="Scooter already rented")
     
     scooters[request.scooter_id]["available"] = False  # Mark as rented
-    response = requests.post(f"{API_URL}/rent")
+    response = requests.post(f"{SCOOTER_URL}/rent") 
     return {"message": f"You have rented {request.scooter_id}"}
 
 @app.post("/return")
@@ -67,5 +67,5 @@ def return_scooter(request: RentRequest):
         raise HTTPException(status_code=404, detail="Scooter not found")
     
     scooters[request.scooter_id]["available"] = True  # Mark as available
-    response = requests.post(f"{API_URL}/return")
+    response = requests.post(f"{SCOOTER_URL}/return")
     return {"message": f"You have returned {request.scooter_id}"}
